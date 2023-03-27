@@ -1,0 +1,52 @@
+@font-face {
+    font-family: "Visby Round";
+    src: url("./Polices/VisbyRoundCF-Heavy.otf");
+}
+
+html {
+    scroll-behavior: smooth;
+    margin-bottom: 10px;
+}
+
+body {
+    margin: 0;
+    background-color: #070707ee;
+}
+
+#entete, #div_score {
+    width: 780px;
+    margin: auto;
+    padding: 10px;
+    text-align: center;
+    font-family: "Visby Round", "Gotham Black", "Grandview", "Impact", sans-serif, serif, system-ui;
+}
+
+#entete {
+    font-size: 300%;
+    color: #ae87db;
+}
+
+#div_score {
+    font-size: 200%;
+    color: #8788db;
+    border-radius: 10px;
+    background-color: #070707;
+    margin-bottom: 10px;
+}
+
+#score {
+    color: #ffa600;
+}
+
+#zonejeu {
+    width: 800px;
+    margin: auto;
+    box-sizing: border-box;
+}
+
+.case {
+    width: 20px;
+    height: 20px;
+    float: left;
+    box-sizing: border-box;
+}
