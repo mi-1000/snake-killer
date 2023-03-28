@@ -7,26 +7,15 @@
 var grille; // Le tableau 2D contenant les cases
 var serpent; // Le serpent à déplacer
 var ennemis = []; // Les serpents ennemis
-var thread; // Le thread principal du jeu
+var thread, threadEnnemis; // Le thread principal du jeu et celui des serpents ennemis
+var tailleQueue = 5, tailleEnnemis = 5; // La taille de la queue du serpent et des ennemis
+var score; // Le score du joueur
 const lignes = 30, colonnes = 40; // Le nombre de lignes et de colonnes
-const tailleQueue = 5, tailleEnnemis = 5; // La taille de la queue du serpent et des ennemis
 const GAUCHE = 37, HAUT = 38, DROITE = 39, BAS = 40; // Les constantes correspondant aux codes des touches
 
 window.addEventListener("load", () => {
     construireGrille();
-    serpent = new Serpent(14, 19);
     dessiner();
-
-    thread = setInterval(() => { // TODO fonction lancerPartie() qui peut démarrer le thread suivant un évènement
-        document.addEventListener("keydown", e => {
-            if (e.keyCode == 27) { clearInterval(thread) }
-        });
-        /// À supprimer au-dessus
-        majGrille();
-    }, 80); // Le serpent se déplace à intervalles réguliers (de 80 ms)
-    setInterval(() => {
-        ajouterEnnemi();
-    }, 750); // On ajoute un serpent ennemi toutes les 750 ms
     window.addEventListener("keydown", (e) => {
         serpent.setDirection(e.keyCode);
     });
@@ -199,16 +188,21 @@ function majGrille() {
 
     ennemis.forEach(ennemi => {
         changerDirection(ennemi);
-    })
+        if (mord(serpent, ennemi)) {
+            supprimerSerpent(ennemi);
+            incrementerScore();
+            incrementerTailleQueue();
+        }
+        if (ennemi.tete[0] <= 0 || ennemi.tete[0] >= lignes - 1 || ennemi.tete[1] <= 0 || ennemi.tete[1] >= colonnes - 1) {
+            supprimerSerpent(ennemi);
+        } // On supprime les serpents ennemis qui atteignent le bord de la grille
+    });
 
     if (serpentMort()) {
+        afficherBoutonJouer();
         clearInterval(thread);
-    } // On arrête le jeu si le serpent touche le bord
-    ennemis.forEach(serpent => {
-        if (serpent.tete[0] <= 0 || serpent.tete[0] >= lignes - 1 || serpent.tete[1] <= 0 || serpent.tete[1] >= colonnes - 1) {
-            supprimerSerpent(serpent);
-        }
-    }); // On supprime les serpents ennemis qui atteignent le bord de la grille
+        enregistrerScore();
+    } // On arrête le jeu si le serpent meurt
 
     dessiner();
 
@@ -224,14 +218,12 @@ function serpentMort() {
     } catch (e) {
 
     }
-    let b = false;
-    ennemis.forEach(ennemi => {
-        console.log(mord(ennemi, serpent));
-        if (mord(ennemi, serpent)) {
+    for (let i = 0; i < ennemis.length; i++) {
+        if (mord(ennemis[i], serpent)) {
             return true;
         }
-    });
-    return a || b;
+    }
+    return a;
 }
 
 /**
@@ -305,17 +297,126 @@ function supprimerSerpent(serpent) {
  * @returns true si "s1" mord "s2", false sinon
  */
 function mord(s1, s2) {
-    /**
-     * 
-     * 
-    s2.queue.forEach(a => { console.log(a[0], s1.tete[0], "**", a[1], s1.tete[1]); if (a[0] === s1.tete[0] && a[1] && s1.tete[1]) { return true; } });
-    return s2.tete === s1.tete;
-    */
-    for (var k = 0; k < s2.tete.length; k++){
-		if (s1.tete[0] == s2.tete[k][0] && s1.tete[1] == s2.tete[k][1]){
-			console.log("TRUE");
+    // s2.queue.forEach(a => { if (a[0] == s1.tete[0] && a[1] == s1.tete[1]) { return true; } });
+    for (let i = 0; i < s2.queue.length; i++) {
+        if (s2.queue[i][0] === s1.tete[0] && s2.queue[i][1] === s1.tete[1]) {
             return true;
-		}
-	}
-	return false;
+        }
+    }
+    return false;
+}
+
+/**
+ * Incrémente le score du joueur
+ */
+function incrementerScore() {
+    score++;
+    document.getElementById("score").innerHTML = "" + score;
+}
+
+/**
+ * Réinitialise le jeu
+ */
+function reinitialiserJeu() {
+    clearInterval(thread);
+    clearInterval(threadEnnemis);
+
+    serpent = new Serpent(14, 19);
+    ennemis = [];
+    tailleQueue = 5;
+    tailleEnnemis = 5;
+    score = 0;
+    document.getElementById("score").innerHTML = score;
+
+    thread = setInterval(() => {
+        majGrille();
+    }, 80); // Le serpent se déplace à intervalles réguliers (de 80 ms)
+    threadEnnemis = setInterval(() => {
+        ajouterEnnemi();
+    }, 750); // On ajoute un serpent ennemi toutes les 750 ms
+
+}
+
+/**
+ * Affiche le bouton Jouer
+ */
+function afficherBoutonJouer() {
+    document.getElementById("wrapperBoutonJouer").style.visibility = "visible";
+}
+
+/**
+ * Cache le bouton Jouer
+ */
+function cacherBoutonJouer() {
+    document.getElementById("wrapperBoutonJouer").style.visibility = "hidden";
+}
+
+/**
+ * Incrémente la taille de la queue
+ */
+function incrementerTailleQueue() {
+    let dernierSegment = serpent.queue[serpent.queue.length - 1]; // Dernier segment de la queue
+    let nouveauSegment;
+
+    switch (serpent.direction) {
+        case GAUCHE:
+            nouveauSegment = [dernierSegment[0], dernierSegment[1] - 1];
+            break;
+        case DROITE:
+            nouveauSegment = [dernierSegment[0], dernierSegment[1] + 1];
+            break;
+        case HAUT:
+            nouveauSegment = [dernierSegment[0] - 1, dernierSegment[1]];
+            break;
+        case BAS:
+            nouveauSegment = [dernierSegment[0] + 1, dernierSegment[1]];
+            break;
+        default:
+            break;
+    }
+
+    serpent.queue.push(nouveauSegment);
+
+}
+
+/**
+ * Enregistre le score du joueur
+ */
+function enregistrerScore() {
+    let donnees = [];
+    let joueur = {};
+
+    joueur.nom = prompt("Score : " + score + ". Entrez votre nom pour enregistrer votre score : ");
+    joueur.score = score;
+    const date = new Date();
+    let jour = date.getDate();
+    let mois = date.getMonth() + 1;
+    let annee = date.getFullYear();
+    let heure = date.getHours();
+    let minutes = date.getMinutes();
+    let secondes = date.getSeconds();
+    joueur.timestamp = `${annee}-${formaterDate(mois)}-${formaterDate(jour)} ${formaterDate(heure)}:${formaterDate(minutes)}:${formaterDate(secondes)}`;
+
+    donnees.push(joueur);
+
+    $.ajax({
+        url: "http://localhost/connexion.php",
+        method: "post",
+        data: { donnees: JSON.stringify(donnees) },
+        success: function (res) {
+            console.log(res);
+        }
+    });
+}
+
+/**
+ * Formate la date au format SQL
+ * 
+ * @param {Number} nombre - Le nombre à formater
+ * @returns {String} Le nombre formaté
+ */
+function formaterDate(nombre) {
+    if (nombre < 10) {
+        return "0" + nombre;
+    } return nombre;
 }
