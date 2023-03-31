@@ -199,7 +199,8 @@ function majGrille() {
     });
 
     if (serpentMort()) {
-        afficherBoutonJouer();
+        afficherWrapper();
+        afficherBoutons();
         clearInterval(thread);
         enregistrerScore();
     } // On arrête le jeu si le serpent meurt
@@ -230,8 +231,21 @@ function serpentMort() {
  * Ajoute un serpent ennemi
  */
 function ajouterEnnemi() {
-    let x = Math.floor(Math.random() * lignes);
-    let y = Math.floor(Math.random() * colonnes);
+    let x;
+    let y;
+    let queue = serpent.queue;
+    let longueurQueue = queue.length;
+    let trouve = false;
+    do {
+        x = Math.floor(Math.random() * lignes);
+        y = Math.floor(Math.random() * colonnes);
+        for (let i = 0; i < longueurQueue; i++) {
+            if (queue[i][0] === x && queue[i][1] === y) {
+                trouve = true;
+                break;
+            }
+        }
+    } while (trouve); // Vérifie que le serpent ennemi n'apparaîtra pas sur l'une des cases de la queue du serpent
     let serpentEnnemi = new Serpent(x, y);
     ennemis.push(serpentEnnemi);
 }
@@ -321,6 +335,9 @@ function reinitialiserJeu() {
     clearInterval(thread);
     clearInterval(threadEnnemis);
 
+    cacherWrapper();
+    cacherBoutons();
+
     serpent = new Serpent(14, 19);
     ennemis = [];
     tailleQueue = 5;
@@ -338,17 +355,33 @@ function reinitialiserJeu() {
 }
 
 /**
- * Affiche le bouton Jouer
+ * Affiche le panneau d'arrière-plan des boutons
  */
-function afficherBoutonJouer() {
+function afficherWrapper() {
     document.getElementById("wrapperBoutonJouer").style.visibility = "visible";
 }
 
 /**
- * Cache le bouton Jouer
+ * Cache le panneau d'arrière-plan des boutons
  */
-function cacherBoutonJouer() {
+function cacherWrapper() {
     document.getElementById("wrapperBoutonJouer").style.visibility = "hidden";
+}
+
+/**
+ * Affiche les boutons du menu
+ */
+function afficherBoutons() {
+    document.getElementById("boutonJouer").style.visibility = "visible";
+    document.getElementById("boutonClassement").style.visibility = "visible";
+}
+
+/**
+ * Cache les boutons du menu
+ */
+function cacherBoutons() {
+    document.getElementById("boutonJouer").style.visibility = "hidden";
+    document.getElementById("boutonClassement").style.visibility = "hidden";
 }
 
 /**
@@ -399,14 +432,7 @@ function enregistrerScore() {
 
     donnees.push(joueur);
 
-    $.ajax({
-        url: "http://localhost/connexion.php",
-        method: "post",
-        data: { donnees: JSON.stringify(donnees) },
-        success: function (res) {
-            console.log(res);
-        }
-    });
+    ajouterBDD(donnees, "./connexion.php");
 }
 
 /**
@@ -419,4 +445,125 @@ function formaterDate(nombre) {
     if (nombre < 10) {
         return "0" + nombre;
     } return nombre;
+}
+
+/**
+ * Envoie des données à la base de données via une requête AJAX
+ * 
+ * @param {Array} donnees - Le tableau associatif contenant les données à envoyer
+ * @param {String} chemin - Le chemin (relatif) d'accès au fichier PHP effectuant le traitement
+ */
+function ajouterBDD(donnees, chemin) {
+    $.ajax({
+        url: chemin,
+        method: "post",
+        data: { donnees: JSON.stringify(donnees) },
+        success: function (res) {
+            console.log(res);
+        }
+    });
+}
+
+/**
+ * Récupère les résultats de la requête effectuée sur la base de données
+ * 
+ * @param {String} chemin - Le chemin (relatif) d'accès au fichier PHP effectuant le traitement
+ * @returns {Promise} La promesse contenant le tableau associatif contenant les données récupérées
+ */
+async function recupererBDD(chemin) {
+    return new Promise(resolve => {
+        $.get(chemin).done(function (resultat) {
+            resolve(JSON.parse(resultat));
+        });
+    });
+}
+
+
+/**
+ * Renvoie le classement sous forme de tableau
+ * 
+ * @param {String} chemin - Le chemin (relatif) d'accès au fichier PHP effectuant le traitement
+ * @returns {HTMLTableElement} - Le tableau contenant les résultats
+ */
+async function getClassement(chemin) {
+    let donnees = await recupererBDD(chemin);
+
+    let tableau = document.createElement("table");
+    tableau.id = "tableauClassement";
+
+    let caption = document.createElement("caption");
+    caption.innerHTML = "Meilleurs scores";
+    tableau.appendChild(caption);
+
+    let titres = document.createElement("th");
+    tableau.appendChild(titres);
+
+    let titre1 = document.createElement("td");
+    titre1.innerHTML = "N°";
+    titres.appendChild(titre1);
+
+    let titre2 = document.createElement("td");
+    titre2.innerHTML = "Joueur";
+    titres.appendChild(titre2);
+
+    let titre3 = document.createElement("td");
+    titre3.innerHTML = "Score";
+    titres.appendChild(titre3);
+
+    let titre4 = document.createElement("td");
+    titre4.innerHTML = "Date";
+    titres.appendChild(titre4);
+
+    for (let i = 0; i < donnees.length; i++) {
+        let ligne = document.createElement("tr");
+        tableau.appendChild(ligne);
+
+        let cellule1 = document.createElement("td");
+        cellule1.innerHTML = (i + 1) + "";
+        ligne.appendChild(cellule1);
+
+        let cellule2 = document.createElement("td");
+        cellule2.innerHTML = donnees[i]["nom"];
+        ligne.appendChild(cellule2);
+
+        let cellule3 = document.createElement("td");
+        cellule3.innerHTML = donnees[i]["score"];
+        ligne.appendChild(cellule3);
+
+        let cellule4 = document.createElement("td");
+        let timestamp = new Date(donnees[i]["date"]);
+        let jour = timestamp.getDate();
+        let mois = timestamp.getMonth() + 1;
+        let annee = timestamp.getFullYear();
+        let dateFormatee = jour + '/' + mois + '/' + annee;
+        cellule4.innerHTML = dateFormatee;
+        ligne.appendChild(cellule4);
+    }
+    return tableau;
+}
+
+/**
+ * Affiche le classement
+ */
+async function afficherClassement() {
+    document.getElementById("boutonJouer").style.visibility = "hidden";
+    document.getElementById("boutonClassement").style.visibility = "hidden";
+    let tableau = await getClassement("./classement.php");
+    document.getElementById("wrapperBoutonJouer").appendChild(tableau);
+    let croix = document.createElement("div");
+    croix.innerHTML = "x";
+    croix.classList.add("croix");
+    croix.addEventListener("click", (e) => {
+        document.getElementById("wrapperBoutonJouer").removeChild(croix);
+        document.getElementById("wrapperBoutonJouer").removeChild(tableau);
+        document.getElementById("boutonJouer").style.visibility = "visible";
+        document.getElementById("boutonClassement").style.visibility = "visible";
+    });
+    croix.addEventListener("mouseenter", (e)=> {
+       croix.innerHTML = "Fermer x";
+    });
+    croix.addEventListener("mouseleave", (e) => {
+       croix.innerHTML = "x";
+    });
+    document.getElementById("wrapperBoutonJouer").appendChild(croix);
 }

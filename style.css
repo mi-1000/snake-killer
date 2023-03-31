@@ -26,7 +26,25 @@ body {
   width: 200px;
   height: 50px;
   left: calc(50vw - 100px);
-  top: calc(50vh - 25px);
+  top: calc(50vh - 35px);
+  border-radius: 10px;
+  background-color: #ffffff;
+  color: #ffa600;
+  box-shadow: #ffffff88 0 0 5px 2px;
+  text-align: center;
+  line-height: 50px;
+  font-family: "Visby Round", "Gotham Black", "Grandview", "Impact", sans-serif,
+    serif, system-ui;
+  transition: transform 0.5s ease-in-out, color 0.2s ease-in,
+    background-color 0.2s ease-out, box-shadow 0.2s ease;
+}
+
+#boutonClassement {
+  position: fixed;
+  width: 200px;
+  height: 50px;
+  left: calc(50vw - 100px);
+  top: calc(50vh + 35px);
   border-radius: 10px;
   background-color: #ffffff;
   color: #ffa600;
@@ -40,6 +58,15 @@ body {
 }
 
 #boutonJouer:hover {
+  cursor: pointer;
+  transform: scale(110%);
+  color: #ffffff;
+  background-color: #ffa600;
+  text-shadow: #000000 0 0 2px;
+  box-shadow: #ffa60088 0 0 5px 2px;
+}
+
+#boutonClassement:hover {
   cursor: pointer;
   transform: scale(110%);
   color: #ffffff;
@@ -86,4 +113,84 @@ body {
   height: 20px;
   float: left;
   box-sizing: border-box;
+}
+
+.croix {
+  position: fixed;
+  top: 10px;
+  right: 10px;
+  font-family: "Visby Round", "Gotham Black", "Grandview", "Impact", sans-serif,
+    serif, system-ui;
+  font-size: 20pt;
+  font-weight: bold;
+  color: #d80000;
+}
+
+.croix:hover {
+  cursor: pointer;
+  font-weight: bolder;
+}
+
+#tableauClassement {
+  margin: auto;
+  width: fit-content;
+  height: fit-content;
+  background-color: #ffffffdd;
+  border-bottom-left-radius: 10px;
+  border-bottom-right-radius: 10px;
+  font-family: "Visby Round", "Gotham Black", "Grandview", "Impact", sans-serif,
+    serif, system-ui;
+  font-size: 14pt;
+  color: #000000;
+  padding: 10px;
+}
+
+#tableauClassement caption {
+  background-color: #ffffffdd;
+  border-top-left-radius: 10px;
+  border-top-right-radius: 10px;
+  margin-top: 50px;
+  padding-top: 10px;
+}
+
+#tableauClassement td {
+  text-align: center;
+}
+
+#tableauClassement td:nth-child(1) {
+  width: 15%;
+}
+
+#tableauClassement td:nth-child(2) {
+  width: 35%;
+}
+
+#tableauClassement td:nth-child(3) {
+  width: 15%;
+}
+
+#tableauClassement td:nth-child(4) {
+  width: 35%;
+}
+
+#tableauClassement th {
+  width: 100vh;
+  display: contents;
+  background-color: transparent;
+}
+
+#tableauClassement th > td {
+  background-color: #ff8888dd;
+  padding-left: 20px;
+  padding-right: 20px;
+}
+
+#tableauClassement th > td:first-child {
+  border-top-left-radius: 10px;
+  border-bottom-left-radius: 10px;
+}
+
+#tableauClassement th > td:last-child {
+  border-top-right-radius: 10px;
+  border-bottom-right-radius: 10px;
 }
